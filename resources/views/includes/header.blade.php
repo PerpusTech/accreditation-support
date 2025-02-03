@@ -21,7 +21,6 @@
                         <img src="assets/images/logo.png" alt="logo-light" height="40">
                     </span>
                 </a>
-                <span>Accreditation Support</span>
             </div>
 
             <button type="button" class="btn btn-sm px-3 font-size-24 header-item waves-effect" id="vertical-menu-btn">

@@ -1,45 +1,57 @@
-version: "3"
 networks:
-    application:
+    laravel:
         driver: bridge
+
 services:
-    app:
+    nginx:
+        image: nginx:alpine
+        container_name: nginx
+        restart: unless-stopped
+        tty: true
+        ports:
+            - "8001:8001"
+        volumes:
+            - ./src:/var/www/app
+            - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+        depends_on:
+            - php
+            - mysql
+        networks:
+            - laravel
+
+    mysql:
+        platform: linux/amd64
+        image: mysql
+        container_name: mysql
+        restart: unless-stopped
+        tty: true
+        ports:
+            - "3306:3306"
+        volumes:
+            - ./mysql:/var/lib/mysql
+        environment:
+            DB_CONNECTION: mysql
+            DB_HOST: ${DB_HOST}
+            DB_PORT: ${DB_PORT}
+            DB_DATABASE: ${DB_DATABASE}
+            DB_USERNAME: ${DB_USERNAME}
+            DB_PASSWORD: ${DB_PASSWORD}
+            SERVICE_TAGS: dev
+            SERVICE_NAME: mysql
+        networks:
+            - laravel
+
+    php:
         build:
             context: .
             dockerfile: Dockerfile
-        container_name: mybackend
-        ports:
-            - 8000:8000
+        container_name: php
+        restart: unless-stopped
+        tty: true
+        working_dir: /var/www/app
         volumes:
-            - ./backend:/app
-        depends_on:
-            - db
-        environment:
-            - DB_HOST=mysql
+            - ./src:/var/www/app
+        ports:
+            - "${PHP_HOST_PORT}:${PHP_DOCKER_CONTAINER_PORT}"
         networks:
-            - application
-        entrypoint: ["/bin/sh", "-c"]
-        command:
-            - |
-                composer install
-                php artisan migrate
-                php artisan serve --host=0.0.0.0 --port=8000
-    db:
-    image: mysql:8.0
-    ports:
-        - "3306:3306"
-    volumes:
-        - ./data:/var/lib/mysql
-    environment:
-        - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-        - MYSQL_DATABASE=${MYSQL_DATABASE}
-        - MYSQL_USER=${MYSQL_USER}
-        - MYSQL_PASSWORD=${MYSQL_PASSWORD}
-    networks:
-        - application
-    container_name: mysqldb
-    healthcheck:
-        test: ["CMD-SHELL", "mysqladmin ping -u root -p ${MYSQL_PASSWORD}"]
-        interval: 5s
-        timeout: 5s
-        retries: 5
+            - laravel
