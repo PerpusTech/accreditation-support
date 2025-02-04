@@ -18,7 +18,6 @@ services:
             - mysql
         networks:
             - laravel
-
     mysql:
         platform: linux/amd64
         image: mysql
